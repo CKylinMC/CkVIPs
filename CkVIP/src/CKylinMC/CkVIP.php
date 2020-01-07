@@ -20,6 +20,7 @@ class CkVIP extends PluginBase{
 
     public function onEnable():void
     {
+        $this->init();
         $this->getLogger()->info('CkVIP Enabled.');
     }
     public function onDisable():void
@@ -35,19 +36,19 @@ class CkVIP extends PluginBase{
         $this->cfg = new Config($this->path. 'options.yml', Config::YAML,array(
             'coin'=>'GP',
             'viplevels'=>[
-                '0'//NO VIP
+                0//NO VIP
                 =>[
                     'name'=>'vip_0'
                 ],
-                '1'//VIP 1
+                1//VIP 1
                 =>[
                     'name'=>'vip_1'
                 ],
-                '2'//VIP 2
+                2//VIP 2
                 =>[
                     'name'=>'vip_2'
                 ],
-                '3'//VIP 3
+                3//VIP 3
                 =>[
                     'name'=>'vip_3'
                 ],
@@ -55,6 +56,14 @@ class CkVIP extends PluginBase{
         ));
         $this->db = new \SQLite3($this->getDataFolder(). 'data.sqlite');
         $this->usermgr = new UserManager($this->db);
+    }
+
+    /**
+     * Get CkVIP users manager instance.
+     * @return UserManager
+     */
+    public function getUserMgr():UserManager{
+        return $this->usermgr;
     }
 
     /**
@@ -68,5 +77,19 @@ class CkVIP extends PluginBase{
         if(array_key_exists($message,$this->messages)) return $this->messages[$message];
         if($fallback!==null) return $fallback;
         return $message;
+    }
+
+    /**
+     * Get all avaiable VIP levels.
+     * @return array
+     */
+    public function getVIPAvaiableLevels():array{
+        $lvs = [];
+        foreach($this->cfg->get('viplevels') as $key=>$values){
+            if(in_array('name',$values)){
+                $lvs[$key] = $this->m($values['name']);
+            }else continue;
+        }
+        return $lvs;
     }
 }
