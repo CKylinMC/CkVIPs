@@ -11,7 +11,7 @@ class SQLiteProvider{
     {
         $this->db = $db;
         $this->db->exec('CREATE TABLE IF NOT EXISTS '.$this->tablename.' ( id INTEGER PRIMARY KEY AUTOINCREMENT, player VARCHAR NOT NULL, viplevel INT NOT NULL, coins INT NOT NULL, expire TIMESTAMP NOT NULL, status VARCHAR NOT NULL );');
-        $this->db->exec("UPDATE SQLITE_SEQUENCE SET SEQ = 1 WHERE NAME = '{$this->tablename}'");
+//        $this->db->exec("UPDATE SQLITE_SEQUENCE SET SEQ = 1 WHERE NAME = '{$this->tablename}'");
     }
 
     public function getDB():\SQLite3{
@@ -35,7 +35,7 @@ class SQLiteProvider{
         return $this->query("SELECT * FROM {$this->tablename} {$where}");
     }
 
-    public function insert(array $keyspair):array{
+    public function insert(array $keyspair):void{
         $columns = '';
         $values = '';
         $total = count($keyspair);
@@ -44,14 +44,14 @@ class SQLiteProvider{
             $counter++;
             $end = $total!==$counter?',':'';
             $columns.= $column.$end;
-            $value = $this->safetyInput($value);
+            $value = is_string($value)?$this->safetyInput($value):$value;
             $values.= "\"{$value}\"".$end;
         }
         $sql = "INSERT INTO {$this->tablename} ( {$columns} ) VALUES ( {$values} );";
-        return $this->query($sql);
+        $this->db->exec($sql);
     }
 
-    public function update(array $keyspair, string $check = ''):array {
+    public function update(array $keyspair, string $check = ''):void {
         $where = $check===''?'':'WHERE '.$check;
         $keys = '';
         $total = count($keyspair);
@@ -59,18 +59,18 @@ class SQLiteProvider{
         foreach ($keyspair as $column=>$value){
             $counter++;
             $end = $total!==$counter?',':'';
-            $value = $this->safetyInput($value);
+            $value = is_string($value)?$this->safetyInput($value):$value;
             $keys.= "$column=\"{$value}\"".$end;
         }
         $sql = "UPDATE {$this->tablename} SET {$keys} {$where}";
-        return $this->query($sql);
+        $this->db->exec($sql);
     }
 
-    public function set(array $keyspair, string $check):array{
+    public function set(array $keyspair, string $check):void{
         if(count($this->get($check))>0){
-            return $this->update($keyspair,$check);
+            $this->update($keyspair,$check);
         }
-        return $this->insert($keyspair);
+        $this->insert($keyspair);
     }
 
     public function del(string $check):void{
@@ -81,7 +81,7 @@ class SQLiteProvider{
     
     public function sqlResultToArray(\SQLite3Result $res):array{
         $arr = [];
-        while($row = $res->fetchArray()){
+        while($row = $res->fetchArray(SQLITE3_ASSOC)){
             $arr[] = $row;
         }
         return $arr;
