@@ -45,7 +45,8 @@ class MyInfoCommand extends PluginCommand
         $txt[] = $api->m('player').': '.$pn;
         $txt[] = $api->m('coin').': '.$info['coins'];
         $txt[] = $api->m('viplevel').': '.$lvs[$info['viplevel']];
-        $txt[] = $api->m('expire').': '.$usermgr->dateStr($info['expire']);
+        $txt[] = $api->m('expire').': '.$usermgr->dateStr($info['expire']) . '('.($usermgr->isUserVIPAvailable($pn)?$api->m('valid'):$api->m('invalid')).')';
+        $txt[] = $api->m('reallevel').': '.$lvs[$usermgr->getUserAvailableVIPLevel($pn)];
         $txt[] = $api->m('status').': '.$api->getStatusText($info['status']);
         foreach($txt as $t){
             $sender->sendMessage($t);

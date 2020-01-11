@@ -145,6 +145,7 @@ class UserManager {
         if(empty($userinfo)) {
             return $fallback;
         }
+        $userinfo = $userinfo[0];
         $alllvs = $this->plugin->getVIPAvaiableLevels();
         if(!in_array($userinfo['viplevel'], $alllvs, true)) return $fallback;
         return $userinfo['viplevel'];
@@ -163,6 +164,7 @@ class UserManager {
         if(empty($userinfo)) {
             return self::USER_NOT_EXISTED;
         }
+        $userinfo = $userinfo[0];
         $alllvs = $this->plugin->getVIPAvaiableLevels();
         if(!in_array($lv, $alllvs, true)) return self::VIP_LEVEL_INVALID;
         $ev = new PlayerSetVipLevelEvent($this->plugin,$name,$lv);
@@ -186,6 +188,7 @@ class UserManager {
         if(empty($userinfo)) {
             return self::USER_NOT_EXISTED;
         }
+        $userinfo = $userinfo[0];
         $ev = new PlayerSetVipExpireDayEvent($this->plugin,$name,$day);
         $ev->call();
         if($ev->isCancelled()){
@@ -210,6 +213,7 @@ class UserManager {
         if(empty($userinfo)) {
             return false;
         }
+        $userinfo = $userinfo[0];
         return $userinfo['viplevel']>0;
     }
 
@@ -222,7 +226,8 @@ class UserManager {
     {
         $name = $this->sql->safetyInput($name);
         $userinfo = $this->sql->get("player='{$name}'");
-        if(empty($userinfo)) {
+        $userinfo = $userinfo[0];
+        if($userinfo===[]) {
             return false;
         }
         if($userinfo['expire']===0) {//0 = forever
@@ -230,7 +235,15 @@ class UserManager {
         }
         $now = time();
         $vipexpire = $userinfo['expire'];
-        return $now>$vipexpire;
+        return $now<$vipexpire;
+    }
+
+    public function getUserAvailableVIPLevel(string $name,int $novipLevel = 0,int $fallbackLevel = -1):int{
+        if(!$this->hasUser($name)){
+            return $fallbackLevel;
+        }
+        $vip = $this->getUserVIPLevel($name);
+        return $this->isUserVIPAvailable($name)?$vip:$novipLevel;
     }
 
     /**
@@ -247,6 +260,7 @@ class UserManager {
         if(empty($userinfo)) {
             return self::USER_NOT_EXISTED;
         }
+        $userinfo = $userinfo[0];
         $ev = new PlayerSetCoinsEvent($this->plugin,$name,$count,$action);
         $ev->call();
         if($ev->isCancelled()){
@@ -295,6 +309,7 @@ class UserManager {
         if(empty($userinfo)) {
             return -1;
         }
+        $userinfo = $userinfo[0];
         return $userinfo['coins'];
     }
 
@@ -311,6 +326,7 @@ class UserManager {
             return self::USER_NOT_EXISTED;
         }
 
+        $userinfo = $userinfo[0];
         $ev = new AccountStatusChanged($this->plugin,$name,$status);
         $ev->call();
         if($ev->isCancelled()){
@@ -332,6 +348,7 @@ class UserManager {
         if(empty($userinfo)) {
             return 'PLAYER_NOT_EXIST';
         }
+        $userinfo = $userinfo[0];
         return $userinfo['status'];
     }
 
@@ -350,6 +367,7 @@ class UserManager {
                 return '';
             }
         }
+        $userinfo = $userinfo[0];
         $e = $userinfo['expire'];
         return $this->dateStr($e);
     }
