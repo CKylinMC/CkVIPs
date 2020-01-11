@@ -31,8 +31,7 @@ class GetPlayerCommand extends PluginCommand
         $usermgr = $api->getUserMgr();
         $pn = $args[0];
 //        $p = $api->getServer()->getPlayer($pn);
-        $p = 1;
-        if($p===null || !$usermgr->hasUser($pn)) {
+        if(!$usermgr->hasUser($pn)) {
             $sender->sendMessage($api->m('player-not-exist',$pn));
             return false;
         }

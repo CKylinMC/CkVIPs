@@ -30,8 +30,8 @@ class SetPlayerCommand extends PluginCommand
         $api = CkVIP::$API;
         $usermgr = $api->getUserMgr();
         $pn = array_shift($args);
-        $p = $api->getServer()->getPlayer($pn);
-        if($p===null || !$usermgr->hasUser($pn)) {
+//        $p = $api->getServer()->getPlayer($pn);
+        if(!$usermgr->hasUser($pn)) {
             $sender->sendMessage($api->m('player-not-exist',$pn));
             return false;
         }
