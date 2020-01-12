@@ -13,7 +13,6 @@ use CKylinMC\Events\PlayerSetCoinsEvent;
 use CKylinMC\Events\PlayerSetVipExpireDayEvent;
 use CKylinMC\Events\PlayerSetVipLevelEvent;
 use SQLite3;
-use const Grpc\STATUS_CANCELLED;
 
 class UserManager {
     private $sql,$plugin;
@@ -25,13 +24,17 @@ class UserManager {
     public const PARAM_INVALID = 4;
     public const USER_EXISTED = 5;
 
-    public const ACTION_ADD = 1;
-    public const ACTION_REDUCE = 2;
-    public const ACTION_SET = 3;
+    public const ACTION_ADD = 11;
+    public const ACTION_REDUCE = 12;
+    public const ACTION_SET = 13;
 
     public const ACCOUNT_FREEZED = 6;
+    public const ACCOUNT_WARNING = 7;
 
-    public const ACTION_CANCELED = 7;
+    public const OUT_OF_WARNING_LIMIT = 8;
+    public const OUT_OF_LIMIT = 9;
+
+    public const ACTION_CANCELED = 10;
 
     // Users account status
     public const USER_STATUS_NORMAL = 0;
@@ -107,6 +110,12 @@ class UserManager {
         return self::OK;
     }
 
+    /**
+     * Create profile for players.
+     * @param string $name Player name.
+     * @param array $config Player config.
+     * @return int Status code.
+     */
     public function createUser(string $name, array $config = []): int{
         if($this->hasUser($name)) {
             return self::USER_EXISTED;
@@ -238,7 +247,14 @@ class UserManager {
         return $now<$vipexpire;
     }
 
-    public function getUserAvailableVIPLevel(string $name,int $novipLevel = 0,int $fallbackLevel = -1):int{
+    /**
+     * Get the player's valid VIP level.
+     * @param string $name Player's name.
+     * @param int $novipLevel The VIP level will return when player's vip is expired.
+     * @param int $fallbackLevel The VIP level will return when the player is not existed.
+     * @return int VIP level.
+     */
+    public function getUserAvailableVIPLevel(string $name, int $novipLevel = 0, int $fallbackLevel = -1):int{
         if(!$this->hasUser($name)){
             return $fallbackLevel;
         }
@@ -266,12 +282,19 @@ class UserManager {
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
+        $maxcoins = $this->plugin->getMaxCoins();
+        if($this->isUserAccountWarning($name)){
+            $maxcoins = ($this->plugin->getWarningLimit())['coins_max'];
+        }
         switch ($action){
             case self::ACTION_ADD:
                 if($safe && $count <= 0) {
                     return self::PARAM_INVALID;
                 }
                 $newcoins = $userinfo['coins']+$count;
+                if($newcoins>$maxcoins){
+                    $newcoins = $maxcoins;
+                }
                 $this->sql->update(['coins'=>$newcoins],"player='{$name}'");
                 return self::OK;
                 break;
@@ -280,6 +303,9 @@ class UserManager {
                     return self::PARAM_INVALID;
                 }
                 $newcoins = $userinfo['coins']-$count;
+                if($newcoins>$maxcoins){
+                    $newcoins = $maxcoins;
+                }
                 if($safe && $newcoins < 0) {
                     $newcoins = 0;
                 }
@@ -289,6 +315,9 @@ class UserManager {
             case self::ACTION_SET:
                 if($safe && $count < 0) {
                     return self::PARAM_INVALID;
+                }
+                if($count>$maxcoins){
+                    $count = $maxcoins;
                 }
                 $this->sql->update(['coins'=>$count],"player='{$name}'");
                 return self::OK;
@@ -340,13 +369,13 @@ class UserManager {
     /**
      * Get Player's account status
      * @param string $name Player's name.
-     * @return string Status.
+     * @return int Status.
      */
-    public function getUserStatus(string $name):string{
+    public function getUserStatus(string $name):int{
         $name = $this->sql->safetyInput($name);
         $userinfo = $this->sql->get("player='{$name}'");
         if(empty($userinfo)) {
-            return 'PLAYER_NOT_EXIST';
+            return -1;
         }
         $userinfo = $userinfo[0];
         return $userinfo['status'];
@@ -372,6 +401,27 @@ class UserManager {
         return $this->dateStr($e);
     }
 
+    /**
+     * Get player's VIP expire time in TIMESTAMP format.
+     * @param string $name Player's name.
+     * @return int TIMESTAMP
+     */
+    public function getUserExpireStamp(string $name):int{
+        $name = $this->sql->safetyInput($name);
+        $userinfo = $this->sql->get("player='{$name}'");
+        if(empty($userinfo)) {
+            return -1;
+        }
+        $userinfo = $userinfo[0];
+        $e = $userinfo['expire'];
+        return $e;
+    }
+
+    /**
+     * Convert timestamp to string.
+     * @param int $stamp Timestamp
+     * @return string Date string.
+     */
     public function dateStr(int $stamp):string{
         if($stamp===0){
             return $this->plugin->m('forever');
@@ -379,12 +429,29 @@ class UserManager {
         return date('Y-m-d H:i:s',$stamp);
     }
 
-    public function addCoins(string $player,int $coins):int{
+    /**
+     * A recommended API that used to give coins to players.
+     * @param string $player Player's name.
+     * @param int $coins The coins count you want to add.
+     * @param bool $force Ignore account's limit or not.
+     * @return int Status code.
+     */
+    public function addCoins(string $player, int $coins, bool $force = false):int{
         if($coins<=0){
             return self::PARAM_INVALID;
         }
         if(!$this->hasUser($player)){
             return  self::USER_NOT_EXISTED;
+        }
+        $status = $this->getUserStatus($player);
+        if($status === self::USER_STATUS_FREEZED&&$force===false){
+            return self::ACCOUNT_FREEZED;
+        }
+        if($status === self::USER_STATUS_WARNING&&$force===false){
+            $limits = $this->plugin->getWarningLimit();
+            if($coins>$limits['coins_changes']){
+                return self::OUT_OF_WARNING_LIMIT;
+            }
         }
         $ev = new PlayerAddCoinsEvent($this->plugin,$player,$coins);
         $ev->call();
@@ -399,12 +466,29 @@ class UserManager {
         return self::OK;
     }
 
-    public function reduceCoins(string $player,int $coins):int{
+    /**
+     * A recommended API that used to take coins away from players.
+     * @param string $player Player's name.
+     * @param int $coins The coins count that you want to take.
+     * @param bool $force Ignore account's limit or not.
+     * @return int Status code.
+     */
+    public function reduceCoins(string $player, int $coins, bool $force = false):int{
         if($coins<=0){
             return self::PARAM_INVALID;
         }
         if(!$this->hasUser($player)){
             return  self::USER_NOT_EXISTED;
+        }
+        $status = $this->getUserStatus($player);
+        if($status === self::USER_STATUS_FREEZED&&$force===false){
+            return self::ACCOUNT_FREEZED;
+        }
+        if($status === self::USER_STATUS_WARNING&&$force===false){
+            $limits = $this->plugin->getWarningLimit();
+            if($coins>$limits['coins_changes']){
+                return self::OUT_OF_WARNING_LIMIT;
+            }
         }
         $ev = new PlayerReduceCoinsEvent($this->plugin,$player,$coins);
         $ev->call();
@@ -417,6 +501,42 @@ class UserManager {
         }
         (new PlayerCoinsChangedEvent($this->plugin,$player))->call();
         return self::OK;
+    }
+
+    /**
+     * Convert day time to timestamp.
+     * @param int $day The day count you want to calculate.
+     * @return int Time stamp.
+     */
+    public function dayToStamp(int $day = 0):int{
+        return $day*24*60*60;
+    }
+
+    /**
+     * Is the player's account in-freezed-state or not.
+     * @param string $player Player's name.
+     * @return bool
+     */
+    public function isUserAccountFreezed(string $player):bool{
+        return $this->getUserStatus($player)===self::USER_STATUS_FREEZED;
+    }
+
+    /**
+     * Is the player's account in-normal-state or not.
+     * @param string $player Player's name.
+     * @return bool
+     */
+    public function isUserAccountNormal(string $player):bool{
+        return $this->getUserStatus($player)===self::USER_STATUS_NORMAL;
+    }
+
+    /**
+     * Is the player's account in-warning-state or not.
+     * @param string $player Player's name.
+     * @return bool
+     */
+    public function isUserAccountWarning(string $player):bool{
+        return $this->getUserStatus($player)===self::USER_STATUS_WARNING;
     }
 
 }

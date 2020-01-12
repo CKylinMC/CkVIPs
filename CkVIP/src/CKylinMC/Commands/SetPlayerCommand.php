@@ -1,13 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CKylinMC\Commands;
 
 use CKylinMC\CkVIP;
-use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\event\Listener;
 use pocketmine\command\PluginCommand;
-use pocketmine\plugin\Plugin;
 
 class SetPlayerCommand extends PluginCommand
 {
@@ -36,6 +35,7 @@ class SetPlayerCommand extends PluginCommand
             return false;
         }
         $changes = [];
+        $haschanged = false;
         foreach ($args as $item){
             $kg = explode('=',$item);
             if(count($kg)!==2||$kg[0]===''||$kg[1]===''){
@@ -56,6 +56,64 @@ class SetPlayerCommand extends PluginCommand
                         return false;
                     }
                     $changes['coins'] = $kg[1];
+                    break;
+                case 'ac':
+                case 'addcoin':
+                case 'addcoins':
+                    if($kg[1]<0){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $res = $usermgr->addCoins($pn,$kg[1]);
+                    switch($res){
+                        case $usermgr::OK:
+                            $sender->sendMessage($api->m('success-add-coins',$kg[1]));
+                            $haschanged = true;
+                            break;
+                        case $usermgr::ACCOUNT_FREEZED:
+                            $sender->sendMessage($api->m('failed-account-freezed',$pn));
+                            break;
+                        case $usermgr::OUT_OF_WARNING_LIMIT:
+                            $sender->sendMessage($api->m('failed-out-of-warning-limit',$pn));
+                            break;
+                        case $usermgr::OUT_OF_LIMIT:
+                            $sender->sendMessage($api->m('failed-out-of-limit',$pn));
+                            break;
+                        case $usermgr::ACTION_CANCELED:
+                            $sender->sendMessage($api->m('failed-task-canceled'));
+                            break;
+                        default:
+                            $sender->sendMessage($api->m('failed-default'));
+                    }
+                    break;
+                case 'tc':
+                case 'takecoin':
+                case 'takecoins':
+                    if($kg[1]<0){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $res = $usermgr->reduceCoins($pn,$kg[1]);
+                    switch($res){
+                        case $usermgr::OK:
+                            $sender->sendMessage($api->m('success-reduce-coins',$kg[1]));
+                            $haschanged = true;
+                            break;
+                        case $usermgr::ACCOUNT_FREEZED:
+                            $sender->sendMessage($api->m('failed-account-freezed',$pn));
+                            break;
+                        case $usermgr::OUT_OF_WARNING_LIMIT:
+                            $sender->sendMessage($api->m('failed-out-of-warning-limit',$pn));
+                            break;
+                        case $usermgr::OUT_OF_LIMIT:
+                            $sender->sendMessage($api->m('failed-out-of-limit',$pn));
+                            break;
+                        case $usermgr::ACTION_CANCELED:
+                            $sender->sendMessage($api->m('failed-task-canceled'));
+                            break;
+                        default:
+                            $sender->sendMessage($api->m('failed-default'));
+                    }
                     break;
                 case 'v':
                 case 'lv':
@@ -80,9 +138,54 @@ class SetPlayerCommand extends PluginCommand
                     }
                     $changes['expire'] = strtotime("+ {$kg[1]} day");
                     break;
+                case 'ad':
+                case 'addday':
+                case 'addvipday':
+                case 'adddays':
+                case 'addvipdays':
+                    if($kg[1]<0){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $orgd = $usermgr->getUserExpireStamp($pn);
+                    if($orgd===-1){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $orgd+= $api->dayToStamp($kg[1]);
+                    $changes['expire'] = $orgd;
+                    break;
+                case 'td':
+                case 'takeday':
+                case 'takevipday':
+                case 'takedays':
+                case 'takevipdays':
+                    if($kg[1]<0){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $orgd = $usermgr->getUserExpireStamp($pn);
+                    if($orgd===-1){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $orgd-= $api->dayToStamp($kg[1]);
+                    $changes['expire'] = $orgd;
+                    break;
+                default:
+                    $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                    return false;
             }
         }
-        if($usermgr->setUser($pn,$changes)===$usermgr::OK){
+        if ($changes===[]) {
+            if(!$haschanged){
+                $sender->sendMessage($api->m('param-invalid',''));
+                return false;
+            }
+            return true;
+        }
+
+        if($usermgr->setUser($pn,$changes)===$usermgr::OK) {
             $sender->sendMessage($api->m('cmd-success'));
             return true;
         }

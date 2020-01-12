@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CKylinMC\Events;
 
 use CKylinMC\CkVIP;
@@ -19,8 +21,8 @@ class PlayerSetVipLevelEvent extends CkVIPEvent
     public function getLevel():int {
         return $this->lv;
     }
-    public function setLevel(int $lv): void
-    {
-        $this->lv = $lv;
-    }
+//    public function setLevel(int $lv): void
+//    {
+//        $this->lv = $lv;
+//    }
 }

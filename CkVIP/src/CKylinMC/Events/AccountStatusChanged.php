@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CKylinMC\Events;
 
 use CKylinMC\CkVIP;
@@ -19,8 +21,8 @@ class AccountStatusChanged extends CkVIPEvent
     public function getStatus():int {
         return $this->status;
     }
-    public function setStatus(int $status): void
-    {
-        $this->status = $status;
-    }
+//    public function setStatus(int $status): void
+//    {
+//        $this->status = $status;
+//    }
 }

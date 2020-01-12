@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CKylinMC\Events;
 
 use CKylinMC\CkVIP;
@@ -19,8 +21,8 @@ class PlayerSetVipExpireDayEvent extends CkVIPEvent
     public function getExpireDay():int {
         return $this->d;
     }
-    public function setExpireDay(int $d): void
-    {
-        $this->d = $d;
-    }
+//    public function setExpireDay(int $d): void
+//    {
+//        $this->d = $d;
+//    }
 }

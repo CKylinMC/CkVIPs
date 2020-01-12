@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CKylinMC\Events;
 
 use CKylinMC\CkVIP;
@@ -19,8 +21,8 @@ class PlayerReduceCoinsEvent extends CkVIPEvent
     public function getCoins():int {
         return $this->coins;
     }
-    public function setCoins(int $coins): void
-    {
-        $this->coins = $coins;
-    }
+//    public function setCoins(int $coins): void
+//    {
+//        $this->coins = $coins;
+//    }
 }

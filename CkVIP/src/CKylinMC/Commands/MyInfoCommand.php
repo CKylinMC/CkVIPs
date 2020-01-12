@@ -1,13 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace CKylinMC\Commands;
 
 use CKylinMC\CkVIP;
-use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\event\Listener;
 use pocketmine\command\PluginCommand;
-use pocketmine\plugin\Plugin;
 
 class MyInfoCommand extends PluginCommand
 {

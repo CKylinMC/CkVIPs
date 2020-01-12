@@ -74,7 +74,12 @@ class CkVIP extends PluginBase{
                 'coins'=>100,
                 'expire'=>0,
                 'status'=>0
-        ]
+            ],
+            'warning_limits'=>[
+                'coins_changes'=>500,
+                'coins_max'=>1500
+            ],
+            'coins_max'=>500000
         ));
         $this->db = new \SQLite3($this->getDataFolder(). 'data.sqlite');
         $this->usermgr = new UserManager($this->db,$this);
@@ -117,7 +122,7 @@ class CkVIP extends PluginBase{
 
     /**
      * Get all avaiable VIP levels.
-     * @return array
+     * @return array VIP levels and translated text.
      */
     public function getVIPAvaiableLevels():array{
         $lvs = [];
@@ -129,10 +134,19 @@ class CkVIP extends PluginBase{
         return $lvs;
     }
 
+    /**
+     * Get default player config.
+     * @return array Default config.
+     */
     public function getDefaultPlayerConfig():array {
         return $this->cfg->get('default');
     }
 
+    /**
+     * Convert account status code to translated text.
+     * @param int $stat Account status code.
+     * @return string Translated text.
+     */
     public function getStatusText(int $stat):string{
         switch($stat){
             case 0:
@@ -148,6 +162,22 @@ class CkVIP extends PluginBase{
                 $txt = 'unknow';
         }
         return $this->m($txt);
+    }
+
+    /**
+     * Get limits config for warning-accounts.
+     * @return array Limits config.
+     */
+    public function getWarningLimit():array{
+        return $this->cfg->get('warning_limits');
+    }
+
+    /**
+     * Get coins maxiumn count limits that one player can take.
+     * @return int Coins count.
+     */
+    public function getMaxCoins():int{
+        return $this->cfg->get('coins_max');
     }
 
     public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool

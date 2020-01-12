@@ -10,7 +10,7 @@ class SQLiteProvider{
     public function __construct(\SQLite3 $db)
     {
         $this->db = $db;
-        $this->db->exec('CREATE TABLE IF NOT EXISTS '.$this->tablename.' ( id INTEGER PRIMARY KEY AUTOINCREMENT, player VARCHAR NOT NULL, viplevel INT NOT NULL, coins INT NOT NULL, expire TIMESTAMP NOT NULL, status VARCHAR NOT NULL );');
+        $this->db->exec('CREATE TABLE IF NOT EXISTS '.$this->tablename.' ( id INTEGER PRIMARY KEY AUTOINCREMENT, player VARCHAR NOT NULL, viplevel INT NOT NULL, coins INT NOT NULL, expire TIMESTAMP NOT NULL, status int NOT NULL );');
 //        $this->db->exec("UPDATE SQLITE_SEQUENCE SET SEQ = 1 WHERE NAME = '{$this->tablename}'");
     }
 
@@ -18,8 +18,13 @@ class SQLiteProvider{
         return $this->db;
     }
 
-    public function setWorkingTable($table = 'users'):void{
+    public function setWorkingTable(string $table = 'users'):void{
         $this->tablename = $table;
+    }
+
+    public function useTable(string $table):void{
+        $this->db->exec("use ".$table);
+        $this->setWorkingTable($table);
     }
 
     public function getWorkingTable():string{
