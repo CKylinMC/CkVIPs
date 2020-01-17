@@ -148,7 +148,7 @@ class UserManager {
      * @param int $fallback If the vip-level saved is invalid, then return.
      * @return int VIP level.
      */
-    public function getUserVIPLevel(string $name, int $fallback = 0):int{
+    public function getUserVIPLevel(string $name, int $fallback = -1):int{
         $name = $this->sql->safetyInput($name);
         $userinfo = $this->sql->get("player='{$name}'");
         if(empty($userinfo)) {
@@ -156,7 +156,7 @@ class UserManager {
         }
         $userinfo = $userinfo[0];
         $alllvs = $this->plugin->getVIPAvaiableLevels();
-        if(!in_array($userinfo['viplevel'], $alllvs, true)) return $fallback;
+        if(!key_exists($userinfo['viplevel'],$alllvs)) return $fallback;
         return $userinfo['viplevel'];
 
     }
@@ -255,11 +255,28 @@ class UserManager {
      * @return int VIP level.
      */
     public function getUserAvailableVIPLevel(string $name, int $novipLevel = 0, int $fallbackLevel = -1):int{
-        if(!$this->hasUser($name)){
-            return $fallbackLevel;
+        if(!$this->isUserVIPAvailable($name)){
+            return $novipLevel;
         }
         $vip = $this->getUserVIPLevel($name);
-        return $this->isUserVIPAvailable($name)?$vip:$novipLevel;
+        if($vip===-1) {
+            return $fallbackLevel;
+        }
+        return $vip;
+    }
+
+    /**
+     * Get VIP Level name.
+     * @param int $lv VIP level.
+     * @param string $fallback If VIP Level is invalid, this variable will be returned.
+     * @return string VIP Level name.
+     */
+    public function getVIPLevelName(int $lv, string $fallback = "unknown"):string{
+        $alllvs = $this->plugin->getVIPAvaiableLevels();
+        if(key_exists($lv,$alllvs)){
+            return $alllvs[$lv];
+        }
+        return $fallback;
     }
 
     /**
