@@ -2,9 +2,24 @@
 name: CkVIPCore
 main: CKylinMC\CkVIP
 version: 1.1.0
-api: 3.0.0
+api: 1.0.0
 
 load: POSTWORLD
 author: CKylinMC
-description: A Simple VIP Plugin.
-website: https://github.com/cansll/CkVIP
+description: A simple VIP Plugin API for old PocketMine-MP versions.
+website: https://github.com/cansll/CkVIPs
+
+permissions:
+  ckvipcore:
+    default: op
+    description: CkVIP Core permissions.
+    children:
+      ckvipcore.cmd.getpl:
+        default: OP
+        description: Allow admins to run getpl command.
+      ckvipcore.cmd.setpl:
+        default: OP
+        description: Allow admins to run setpl command.
+      ckvipcore.cmd.myinfo:
+        default: true
+        description: Allow players to run myinfo command.

@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
 namespace CKylinMC\Events;
 
 use CKylinMC\CkVIP;
 
-class PlayerCoinsChangedEvent extends CkVIPOnceEvent
+class PlayerCoinsChangedEvent extends CkVIPEvent
 {
     private $player;
     public function __construct(CkVIP $plugin,string $player)

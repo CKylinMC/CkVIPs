@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace CKylinMC\Commands;
 
 use CKylinMC\CkVIP;
@@ -18,7 +16,7 @@ class MyInfoCommand extends PluginCommand
         $this->setDescription($api->m('cmd-myinfo-description'));
         $this->setPermission('ckvipcore.cmd.myinfo');
     }
-    public function execute(CommandSender $sender, string $commandLabel, array $args): bool{
+    public function execute(CommandSender $sender, $commandLabel, array $args): bool{
         if(!parent::execute($sender,$commandLabel,$args)){
             return false;
         }

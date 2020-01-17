@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace CKylinMC\Commands;
 
 use CKylinMC\CkVIP;
@@ -18,7 +16,7 @@ class SetPlayerCommand extends PluginCommand
         $this->setDescription($api->m('cmd-setpl-description'));
         $this->setPermission('ckvipcore.cmd.setpl');
     }
-    public function execute(CommandSender $sender, string $commandLabel, array $args): bool{
+    public function execute(CommandSender $sender, $commandLabel, array $args): bool{
         if(!parent::execute($sender,$commandLabel,$args)){
             return false;
         }
@@ -132,11 +130,11 @@ class SetPlayerCommand extends PluginCommand
                 case 'day':
                 case 'days':
                 case 'expire':
-//                    if($kg[1]<0){
-//                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
-//                        return false;
-//                    }
-                    $changes['expire'] = $kg[1]<0?time()+($kg[1]*60*60*24):($kg[1]==0?0:strtotime("+ {$kg[1]} day"));
+                    if($kg[1]<0){
+                        $sender->sendMessage($api->m('param-invalid',$kg[0]));
+                        return false;
+                    }
+                    $changes['expire'] = strtotime("+ {$kg[1]} day");
                     break;
                 case 'ad':
                 case 'addday':
@@ -152,7 +150,7 @@ class SetPlayerCommand extends PluginCommand
                         $sender->sendMessage($api->m('param-invalid',$kg[0]));
                         return false;
                     }
-                    $orgd+= $usermgr->dayToStamp($kg[1]);
+                    $orgd+= $api->dayToStamp($kg[1]);
                     $changes['expire'] = $orgd;
                     break;
                 case 'td':

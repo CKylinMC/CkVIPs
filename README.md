@@ -16,5 +16,5 @@
 * [ ] 会员特权
   * [ ] 会员头衔(CkVIPChats)
   * [ ] 会员文字颜色(CkVIPChats)
-  * [x] 会员进入提示(CkVIPLoginTips)
+  * [ ] 会员进入提示(CkVIPLoginTips)
   * [ ] 会员特效(CkVIPEffects)

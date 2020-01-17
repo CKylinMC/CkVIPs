@@ -132,7 +132,7 @@ class UserManager {
             $preconfig[$key] = $value;
         }
         $ev = new PlayerCreateEvent($this->plugin,$name,$preconfig);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -148,7 +148,7 @@ class UserManager {
      * @param int $fallback If the vip-level saved is invalid, then return.
      * @return int VIP level.
      */
-    public function getUserVIPLevel(string $name, int $fallback = -1):int{
+    public function getUserVIPLevel(string $name, int $fallback = 0):int{
         $name = $this->sql->safetyInput($name);
         $userinfo = $this->sql->get("player='{$name}'");
         if(empty($userinfo)) {
@@ -156,7 +156,7 @@ class UserManager {
         }
         $userinfo = $userinfo[0];
         $alllvs = $this->plugin->getVIPAvaiableLevels();
-        if(!key_exists($userinfo['viplevel'],$alllvs)) return $fallback;
+        if(!in_array($userinfo['viplevel'], $alllvs, true)) return $fallback;
         return $userinfo['viplevel'];
 
     }
@@ -177,7 +177,7 @@ class UserManager {
         $alllvs = $this->plugin->getVIPAvaiableLevels();
         if(!in_array($lv, $alllvs, true)) return self::VIP_LEVEL_INVALID;
         $ev = new PlayerSetVipLevelEvent($this->plugin,$name,$lv);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -199,7 +199,7 @@ class UserManager {
         }
         $userinfo = $userinfo[0];
         $ev = new PlayerSetVipExpireDayEvent($this->plugin,$name,$day);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -255,28 +255,11 @@ class UserManager {
      * @return int VIP level.
      */
     public function getUserAvailableVIPLevel(string $name, int $novipLevel = 0, int $fallbackLevel = -1):int{
-        if(!$this->isUserVIPAvailable($name)){
-            return $novipLevel;
-        }
-        $vip = $this->getUserVIPLevel($name);
-        if($vip===-1) {
+        if(!$this->hasUser($name)){
             return $fallbackLevel;
         }
-        return $vip;
-    }
-
-    /**
-     * Get VIP Level name.
-     * @param int $lv VIP level.
-     * @param string $fallback If VIP Level is invalid, this variable will be returned.
-     * @return string VIP Level name.
-     */
-    public function getVIPLevelName(int $lv, string $fallback = "unknown"):string{
-        $alllvs = $this->plugin->getVIPAvaiableLevels();
-        if(key_exists($lv,$alllvs)){
-            return $alllvs[$lv];
-        }
-        return $fallback;
+        $vip = $this->getUserVIPLevel($name);
+        return $this->isUserVIPAvailable($name)?$vip:$novipLevel;
     }
 
     /**
@@ -295,7 +278,7 @@ class UserManager {
         }
         $userinfo = $userinfo[0];
         $ev = new PlayerSetCoinsEvent($this->plugin,$name,$count,$action);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -374,7 +357,7 @@ class UserManager {
 
         $userinfo = $userinfo[0];
         $ev = new AccountStatusChanged($this->plugin,$name,$status);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -471,7 +454,7 @@ class UserManager {
             }
         }
         $ev = new PlayerAddCoinsEvent($this->plugin,$player,$coins);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -479,7 +462,8 @@ class UserManager {
         if(!$res === self::OK){
             return $res;
         }
-        (new PlayerCoinsChangedEvent($this->plugin,$player))->call();
+        $ev = new PlayerCoinsChangedEvent($this->plugin,$player);
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         return self::OK;
     }
 
@@ -508,7 +492,7 @@ class UserManager {
             }
         }
         $ev = new PlayerReduceCoinsEvent($this->plugin,$player,$coins);
-        $ev->call();
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         if($ev->isCancelled()){
             return self::ACTION_CANCELED;
         }
@@ -516,7 +500,8 @@ class UserManager {
         if(!$res === self::OK){
             return $res;
         }
-        (new PlayerCoinsChangedEvent($this->plugin,$player))->call();
+        $ev = new PlayerCoinsChangedEvent($this->plugin,$player);
+        $this->plugin->getServer()->getPluginManager()->callEvent($ev);
         return self::OK;
     }
 

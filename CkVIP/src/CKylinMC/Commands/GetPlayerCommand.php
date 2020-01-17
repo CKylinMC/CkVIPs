@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace CKylinMC\Commands;
 
 use CKylinMC\CkVIP;
@@ -18,7 +16,7 @@ class GetPlayerCommand extends PluginCommand
         $this->setDescription($api->m('cmd-getpl-description'));
         $this->setPermission('ckvipcore.cmd.getpl');
     }
-    public function execute(CommandSender $sender, string $commandLabel, array $args): bool{
+    public function execute(CommandSender $sender, $commandLabel, array $args): bool{
         if(!parent::execute($sender,$commandLabel,$args)){
             return false;
         }
@@ -47,9 +45,9 @@ class GetPlayerCommand extends PluginCommand
         $txt[] = $api->m('info-title');
         $txt[] = $api->m('player').': '.$pn;
         $txt[] = $api->m('coin').': '.$info['coins'];
-        $txt[] = $api->m('viplevel').': '.$usermgr->getVIPLevelName($info['viplevel']);
+        $txt[] = $api->m('viplevel').': '.$lvs[$info['viplevel']];
         $txt[] = $api->m('expire').': '.$usermgr->dateStr($info['expire']) . '('.($usermgr->isUserVIPAvailable($pn)?$api->m('valid'):$api->m('invalid')).')';
-        $txt[] = $api->m('reallevel').': '.$usermgr->getVIPLevelName($usermgr->getUserAvailableVIPLevel($pn));
+        $txt[] = $api->m('reallevel').': '.$lvs[$usermgr->getUserAvailableVIPLevel($pn)];
         $txt[] = $api->m('status').': '.$api->getStatusText($info['status']);
         foreach($txt as $t){
             $sender->sendMessage($t);

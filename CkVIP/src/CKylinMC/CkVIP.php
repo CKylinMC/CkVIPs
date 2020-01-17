@@ -11,7 +11,7 @@ use CKylinMC\Listeners\PlayerJoinListener;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\permission\Permission;
-use pocketmine\permission\PermissionManager;
+use pocketmine\plugin\PluginManager;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 
@@ -35,14 +35,14 @@ class CkVIP extends PluginBase{
 
     public function onEnable():void
     {
-        $this->init();
+        $this->initPlugin();
         $this->getLogger()->info('CkVIP Enabled.');
     }
     public function onDisable():void
     {
         $this->getLogger()->info('CkVIP Disabled.');
     }
-    public function init():void{
+    public function initPlugin():void{
         $this->saveResource('messages.yml');
         $this->getServer()->getPluginManager()->registerEvents(new PlayerJoinListener($this), $this);
         $this->path = $this->getDataFolder();
@@ -84,10 +84,10 @@ class CkVIP extends PluginBase{
         $this->db = new \SQLite3($this->getDataFolder(). 'data.sqlite');
         $this->usermgr = new UserManager($this->db,$this);
 
-        $mgr = PermissionManager::getInstance();
-        $mgr->addPermission(new Permission('ckvipcore.cmd.getpl','Allow admins to run getpl command',Permission::DEFAULT_OP));
-        $mgr->addPermission(new Permission('ckvipcore.cmd.setpl','Allow admins to run setpl command',Permission::DEFAULT_OP));
-        $mgr->addPermission(new Permission('ckvipcore.cmd.myinfo','Allow players to run myinfo command',Permission::DEFAULT_TRUE));
+//        $mgr = PermissionManager::getInstance();
+//        $mgr->addPermission(new Permission('ckvipcore.cmd.getpl','Allow admins to run getpl command',Permission::DEFAULT_OP));
+//        $mgr->addPermission(new Permission('ckvipcore.cmd.setpl','Allow admins to run setpl command',Permission::DEFAULT_OP));
+//        $mgr->addPermission(new Permission('ckvipcore.cmd.myinfo','Allow players to run myinfo command',Permission::DEFAULT_TRUE));
 
         $m = $this->getServer()->getCommandMap();
         $m->register('ckvipcore',new SetPlayerCommand());
@@ -180,7 +180,7 @@ class CkVIP extends PluginBase{
         return $this->cfg->get('coins_max');
     }
 
-    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
+    public function onCommand(CommandSender $sender, Command $command, $label, array $args)
     {
         return true;
     }
